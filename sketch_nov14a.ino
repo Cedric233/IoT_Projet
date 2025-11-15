@@ -1,5 +1,7 @@
 #include <WiFiNINA.h>
 #include <Arduino_MKRIoTCarrier.h>
+#include "secrets.h"
+
 MKRIoTCarrier carrier;
 
 // --- Wi-Fi ---
@@ -8,6 +10,13 @@ char pass[] = "cedric10";
 
 int status = WL_IDLE_STATUS;
 IPAddress ipLocal;                 // variable globale IP
+
+// --- ThingSpeak ---
+WiFiClient tsClient;                    // client TCP utilisé pour la connexion à ThingSpeak
+const char* tsServer = "api.thingspeak.com";  // nom du serveur ThingSpeak
+unsigned long lastTS = 0;
+const unsigned long TS_PERIOD_MS = 20000;
+
 
 // --- LEDs ---
 bool ledsOn = false;
@@ -28,6 +37,59 @@ void writeColors() {
   carrier.leds.setPixelColor(3, carrier.leds.Color(255, 255, 0));
   carrier.leds.setPixelColor(4, carrier.leds.Color(255, 0, 255));
 }
+
+bool httpRequest(float tempC, float press_hPa, float humPct) {
+  // Corps de la requête: field1 = Temp, field2 = Pression, field3 = Humidité
+  String data = String("field1=") + String(tempC, 2) +
+                "&field2=" + String(press_hPa, 2) +
+                "&field3=" + String(humPct, 1);
+
+  // Connexion TCP vers ThingSpeak (port 80)
+  if (!tsClient.connect(tsServer, 80)) {
+    Serial.println("ThingSpeak: connect() a echoue");
+    return false;
+  }
+
+  // Lignes HTTP (en-têtes)
+  tsClient.println("POST /update HTTP/1.1");
+  tsClient.println("Host: api.thingspeak.com");
+  tsClient.println("Connection: close");
+  tsClient.println("User-Agent: ArduinoWiFi/1.1");
+  tsClient.print  ("X-THINGSPEAKAPIKEY: ");
+  tsClient.println(tsApiKey);
+  tsClient.println("Content-Type: application/x-www-form-urlencoded");
+  tsClient.print  ("Content-Length: ");
+  tsClient.println(data.length());
+  tsClient.println();              // ligne vide entre headers et body
+
+  // Corps (les fields)
+  tsClient.print(data);
+
+  // (Optionnel) lire rapidement la réponse pour debug
+  unsigned long t0 = millis();
+  String lastLine;
+  while (tsClient.connected() && millis() - t0 < 3000) {
+    while (tsClient.available()) {
+      lastLine = tsClient.readStringUntil('\n');  // l’ID d’update est en fin de body
+       Serial.println(lastLine); // décommente si tu veux tout voir
+    }
+  }
+  tsClient.stop();
+
+  // Si la dernière ligne est un entier > 0, l’update a été prise en compte
+  long id = lastLine.toInt();
+  if (id > 0) {
+    Serial.print("ThingSpeak: update id=");
+    Serial.println(id);
+    return true;
+  } else {
+    Serial.println("ThingSpeak: reponse non valide / update KO");
+    return false;
+  }
+}
+
+
+
 
 void printMacAddress(byte mac[]) {
   for (int i = 5; i >= 0; i--) {
@@ -132,7 +194,7 @@ void setup() {
     carrier.display.print("Ping echoue!");
   }
   delay(3000);
-  // ✅ --- FIN TEST DE PING ---
+  //  --- FIN TEST DE PING ---
 
   // Prépare l'écran pour les valeurs
   carrier.display.fillScreen(ST77XX_BLACK);
@@ -188,4 +250,18 @@ void loop() {
     carrier.display.print(fPressSL_hPa, 1);
     carrier.display.print(" hPa");
   }
+
+  // --- Envoi périodique vers ThingSpeak (POST) ---
+if (millis() - lastTS >= TS_PERIOD_MS) {
+  lastTS = millis();
+
+  // fTemp (°C), fPressSL_hPa (hPa corrigée), fHum (%)
+  bool ok = httpRequest(fTemp, fPressSL_hPa, fHum);
+  if (ok) {
+    Serial.println("POST ThingSpeak: OK");
+  } else {
+    Serial.println("POST ThingSpeak: ECHEC");
+  }
+}
+
 }
