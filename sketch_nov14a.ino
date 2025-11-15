@@ -6,7 +6,7 @@
 // --- Adafruit IO ---
 #define IO_USERNAME  "cedric3iL"
 
-// Feeds MQTT (adapte "humidity"/"pressure" si tu as mis d'autres noms de feeds)
+// Feeds MQTT 
 #define IO_FEED_TEMP_MQTT  "cedric3iL/feeds/temperature"
 #define IO_FEED_HUM_MQTT   "cedric3iL/feeds/humidity"
 #define IO_FEED_PRESS_MQTT "cedric3iL/feeds/pressure"
