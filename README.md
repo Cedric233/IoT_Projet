@@ -19,5 +19,10 @@ Les données sont envoyées sur ThingSpeak.
 ### 🧭 Pression atmosphérique
 ![Pression](images/press.png)
 
+## 📊 Dashboard Adafruit IO
+
+Voici l’affichage depuis mon dashboard Adafruit IO :
+
+![Dashboard Adafruit](images/export_MQTT.png)
 
 
