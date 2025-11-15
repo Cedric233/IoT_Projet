@@ -30,16 +30,16 @@ char ssid[] = "TonSSID";
 char pass[] = "TonMotDePasse";
 const char* TS_API_KEY = "TaCleAPI";
 
-## 🌡️ Dernière température mesurée
+## Dernière température mesurée
 ![Dernière température](https://api.thingspeak.com/channels/3165332/field/1/last.png)
 
-## 💧 Dernière humidité mesurée
+## Dernière humidité mesurée
 ![Dernière humidité](https://api.thingspeak.com/channels/3165332/field/3/last.png)
 
-## 🧭 Dernière pression atmosphérique
+## Dernière pression atmosphérique
 ![Dernière pression](https://api.thingspeak.com/channels/3165332/field/2/last.png)
 
 
-## 📈 Évolution des 24 dernières heures
+## Évolution des 24 dernières heures
 ![Graphique des 24h](https://api.thingspeak.com/channels/3165332/charts/1?bgcolor=%23ffffff&color=%23d62020&dynamic=true&results=100&title=Température+sur+24h&type=line)
 
